@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "bettercoords",
+	"version": "${version}",
+	"name": "Better Coords",
+	"description": "F3 shows only your XYZ coordinates. Optional glitch mode scrambles them, and fake coordinates move with you.",
+	"authors": [
+		"ruzgar"
+	],
+	"contact": {},
+	"license": "MIT",
+	"icon": "assets/bettercoords/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"dev.ruzgar.bettercoords.BetterCoords"
+		],
+		"modmenu": [
+			"dev.ruzgar.bettercoords.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		{
+			"config": "bettercoords.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.11",
+		"java": ">=21"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}

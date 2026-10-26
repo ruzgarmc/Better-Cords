@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.ruzgar.bettercoords.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"DebugHudMixin",
+		"DebugHudProfileMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

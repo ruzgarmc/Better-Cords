@@ -1,0 +1,19 @@
+{
+	"bettercoords.config.title": "Better Coords",
+	"bettercoords.config.enabled": "Mod",
+	"bettercoords.config.enabled.tooltip": "ON: F3 shows only your XYZ coordinates.\nOFF: vanilla F3 screen.",
+	"bettercoords.config.glitch": "Glitch Mode",
+	"bettercoords.config.glitch.tooltip": "ON: the coordinates (and the facing line) turn into constantly shifting junk glyphs.\nOFF: normal numbers.",
+	"bettercoords.config.facing": "Facing Line",
+	"bettercoords.config.facing.tooltip": "ON: a second line shows which way you are looking, like the vanilla debug screen.\nOFF: coordinates only.",
+	"bettercoords.config.fake.section": "Fake Coordinates",
+	"bettercoords.config.fake.enabled": "Fake Coordinates",
+	"bettercoords.config.fake.enabled.tooltip": "OFF: your real coordinates are shown.\nON: the spot you are standing on is shown as the X/Y/Z below, and moving offsets from there.",
+	"bettercoords.config.fake.x": "X",
+	"bettercoords.config.fake.y": "Y",
+	"bettercoords.config.fake.z": "Z",
+	"bettercoords.config.fake.reanchor": "Re-anchor to where I am now",
+	"bettercoords.config.fake.reanchor.done": "Will re-anchor on close",
+	"bettercoords.config.fake.reanchor.tooltip": "Makes your current position count as the fake coordinates again, without changing the numbers.",
+	"bettercoords.config.fake.info": "Example: standing at 50 100 50 with 1000 100 1000 entered, walking 100 blocks in +Z shows 1000 100 1100."
+}

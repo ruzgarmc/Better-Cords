@@ -1,0 +1,19 @@
+{
+	"bettercoords.config.title": "Better Coords",
+	"bettercoords.config.enabled": "Mod",
+	"bettercoords.config.enabled.tooltip": "AÇIK: F3'te sadece XYZ koordinatların görünür.\nKAPALI: Minecraft'ın kendi F3 ekranı.",
+	"bettercoords.config.glitch": "Glitch Modu",
+	"bettercoords.config.glitch.tooltip": "AÇIK: koordinatlar (ve bakılan yön satırı) sürekli değişen bozuk karakterlere dönüşür.\nKAPALI: normal sayılar.",
+	"bettercoords.config.facing": "Bakılan Yön",
+	"bettercoords.config.facing.tooltip": "AÇIK: altına hangi yöne baktığını gösteren ikinci bir satır eklenir, vanilla F3'teki gibi.\nKAPALI: sadece koordinat.",
+	"bettercoords.config.fake.section": "Sahte Koordinatlar",
+	"bettercoords.config.fake.enabled": "Sahte Koordinatlar",
+	"bettercoords.config.fake.enabled.tooltip": "KAPALI: gerçek koordinatların gösterilir.\nAÇIK: şu an durduğun nokta aşağıdaki X/Y/Z olarak gösterilir, hareket ettikçe oradan devam eder.",
+	"bettercoords.config.fake.x": "X",
+	"bettercoords.config.fake.y": "Y",
+	"bettercoords.config.fake.z": "Z",
+	"bettercoords.config.fake.reanchor": "Bulunduğum yeri yeniden sabitle",
+	"bettercoords.config.fake.reanchor.done": "Kapatınca yeniden sabitlenecek",
+	"bettercoords.config.fake.reanchor.tooltip": "Sayıları değiştirmeden, şu anki konumunu tekrar sahte koordinat noktası olarak alır.",
+	"bettercoords.config.fake.info": "Örnek: 50 100 50'deyken 1000 100 1000 girdin; +Z yönünde 100 blok gidince 1000 100 1100 olur."
+}
