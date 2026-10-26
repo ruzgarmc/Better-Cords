@@ -6,39 +6,48 @@ import net.minecraft.client.gui.tooltip.Tooltip;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.CyclingButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /**
- * Settings screen opened from Mod Menu. Edits are applied and saved when the screen closes
- * (Done button or Escape).
+ * Settings screen opened from Mod Menu: a two column grid of switches, the two toggle keys, and the
+ * fake coordinate controls. Edits are applied and saved when the screen closes (Done or Escape).
  */
 public class BetterCoordsConfigScreen extends Screen {
-	private static final int CONTROL_WIDTH = 200;
-	private static final int CONTROL_HEIGHT = 20;
-	private static final int FIELD_WIDTH = 62;
-	private static final int FIELD_GAP = 7;
+	private static final int PANEL_WIDTH = 304;
+	private static final int COL_WIDTH = 149;
+	private static final int COL_GAP = 6;
+	private static final int ROW_HEIGHT = 20;
+	private static final int FIELD_WIDTH = 97;
 	private static final Pattern NUMBER = Pattern.compile("-?\\d*\\.?\\d*");
 
 	private static final int WHITE = 0xFFFFFFFF;
 	private static final int GRAY = 0xFFA0A0A0;
 	private static final int SECTION = 0xFFFFD75F;
+	private static final int DIVIDER = 0x40FFFFFF;
 
-	// Row layout (scaled GUI pixels). Kept compact so everything fits at the minimum 240px GUI height.
-	private static final int TITLE_Y = 6;
-	private static final int MOD_TOGGLE_Y = 18;
-	private static final int GLITCH_TOGGLE_Y = 40;
-	private static final int FACING_TOGGLE_Y = 62;
-	private static final int SECTION_Y = 88;
-	private static final int FAKE_TOGGLE_Y = 100;
+	// Row layout (scaled GUI pixels). Kept compact so everything fits at the minimum 240px height.
+	private static final int TITLE_Y = 7;
+	private static final int TOGGLE_ROW_1_Y = 22;
+	private static final int TOGGLE_ROW_2_Y = 46;
+	private static final int KEYS_SECTION_Y = 73;
+	private static final int KEYS_ROW_Y = 85;
+	private static final int FAKE_SECTION_Y = 112;
 	private static final int FIELD_LABEL_Y = 124;
 	private static final int FIELD_Y = 134;
 	private static final int REANCHOR_Y = 158;
-	private static final int INFO_Y = 182;
-	private static final int INFO_WIDTH = 260;
+	private static final int INFO_Y = 183;
+
+	private static final int LISTEN_NONE = -1;
+	private static final int LISTEN_MOD = 0;
+	private static final int LISTEN_FAKE = 1;
 
 	private final Screen parent;
 
@@ -47,15 +56,20 @@ public class BetterCoordsConfigScreen extends Screen {
 	private boolean glitchEnabled;
 	private boolean showFacing;
 	private boolean fakeEnabled;
+	private int modKey;
+	private int fakeKey;
 	private String xText;
 	private String yText;
 	private String zText;
 	private boolean reanchorRequested;
+	private int listening = LISTEN_NONE;
 
 	private TextFieldWidget xField;
 	private TextFieldWidget yField;
 	private TextFieldWidget zField;
 	private ButtonWidget reanchorButton;
+	private ButtonWidget modKeyButton;
+	private ButtonWidget fakeKeyButton;
 
 	public BetterCoordsConfigScreen(Screen parent) {
 		super(Text.translatable("bettercoords.config.title"));
@@ -66,6 +80,8 @@ public class BetterCoordsConfigScreen extends Screen {
 		this.glitchEnabled = cfg.glitchEnabled;
 		this.showFacing = cfg.showFacing;
 		this.fakeEnabled = cfg.fakeCoordsEnabled;
+		this.modKey = cfg.toggleModKey;
+		this.fakeKey = cfg.toggleFakeCoordsKey;
 		this.xText = formatNumber(cfg.fakeX);
 		this.yText = formatNumber(cfg.fakeY);
 		this.zText = formatNumber(cfg.fakeZ);
@@ -73,73 +89,129 @@ public class BetterCoordsConfigScreen extends Screen {
 
 	@Override
 	protected void init() {
-		int centerX = this.width / 2;
-		int left = centerX - CONTROL_WIDTH / 2;
+		int left = this.left();
+		int rightCol = left + COL_WIDTH + COL_GAP;
 
-		// Mod on/off
+		// --- switches, two per row ---
 		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.modEnabled)
 				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.enabled.tooltip")))
-				.build(left, MOD_TOGGLE_Y, CONTROL_WIDTH, CONTROL_HEIGHT,
+				.build(left, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
 						Text.translatable("bettercoords.config.enabled"),
 						(button, value) -> this.modEnabled = value));
 
-		// Glitch mode
 		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.glitchEnabled)
 				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.glitch.tooltip")))
-				.build(left, GLITCH_TOGGLE_Y, CONTROL_WIDTH, CONTROL_HEIGHT,
+				.build(rightCol, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
 						Text.translatable("bettercoords.config.glitch"),
 						(button, value) -> this.glitchEnabled = value));
 
-		// Facing line
 		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.showFacing)
 				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.facing.tooltip")))
-				.build(left, FACING_TOGGLE_Y, CONTROL_WIDTH, CONTROL_HEIGHT,
+				.build(left, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
 						Text.translatable("bettercoords.config.facing"),
 						(button, value) -> this.showFacing = value));
 
-		// --- Fake coordinates section ---
 		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.fakeEnabled)
 				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.fake.enabled.tooltip")))
-				.build(left, FAKE_TOGGLE_Y, CONTROL_WIDTH, CONTROL_HEIGHT,
+				.build(rightCol, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
 						Text.translatable("bettercoords.config.fake.enabled"),
 						(button, value) -> {
 							this.fakeEnabled = value;
 							this.updateFakeControls();
 						}));
 
-		this.xField = this.addNumberField(left, FIELD_Y, this.xText, Text.translatable("bettercoords.config.fake.x"), s -> this.xText = s);
-		this.yField = this.addNumberField(left + FIELD_WIDTH + FIELD_GAP, FIELD_Y, this.yText, Text.translatable("bettercoords.config.fake.y"), s -> this.yText = s);
-		this.zField = this.addNumberField(left + 2 * (FIELD_WIDTH + FIELD_GAP), FIELD_Y, this.zText, Text.translatable("bettercoords.config.fake.z"), s -> this.zText = s);
+		// --- toggle keys ---
+		this.modKeyButton = this.addDrawableChild(ButtonWidget.builder(
+						Text.empty(), button -> this.startListening(LISTEN_MOD))
+				.dimensions(left, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
+				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.keys.hint")))
+				.build());
+
+		this.fakeKeyButton = this.addDrawableChild(ButtonWidget.builder(
+						Text.empty(), button -> this.startListening(LISTEN_FAKE))
+				.dimensions(rightCol, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
+				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.keys.hint")))
+				.build());
+
+		// --- fake coordinates ---
+		this.xField = this.addNumberField(left, this.xText, Text.translatable("bettercoords.config.fake.x"), s -> this.xText = s);
+		this.yField = this.addNumberField(left + FIELD_WIDTH + COL_GAP, this.yText, Text.translatable("bettercoords.config.fake.y"), s -> this.yText = s);
+		this.zField = this.addNumberField(left + 2 * (FIELD_WIDTH + COL_GAP), this.zText, Text.translatable("bettercoords.config.fake.z"), s -> this.zText = s);
 
 		this.reanchorButton = this.addDrawableChild(ButtonWidget.builder(
-						Text.translatable("bettercoords.config.fake.reanchor"),
-						button -> {
+						Text.translatable("bettercoords.config.fake.reanchor"), button -> {
 							this.reanchorRequested = true;
 							button.setMessage(Text.translatable("bettercoords.config.fake.reanchor.done"));
 							button.active = false;
 						})
-				.dimensions(left, REANCHOR_Y, CONTROL_WIDTH, CONTROL_HEIGHT)
+				.dimensions(left, REANCHOR_Y, PANEL_WIDTH, ROW_HEIGHT)
 				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.fake.reanchor.tooltip")))
 				.build());
 		if (this.reanchorRequested) {
 			this.reanchorButton.setMessage(Text.translatable("bettercoords.config.fake.reanchor.done"));
 		}
 
-		// Done
 		this.addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> this.close())
-				.dimensions(left, this.height - 26, CONTROL_WIDTH, CONTROL_HEIGHT)
+				.dimensions(left + PANEL_WIDTH / 4, this.height - 26, PANEL_WIDTH / 2, ROW_HEIGHT)
 				.build());
 
+		this.refreshKeyButtons();
 		this.updateFakeControls();
 	}
 
-	private TextFieldWidget addNumberField(int x, int y, String initial, Text label, java.util.function.Consumer<String> onChange) {
-		TextFieldWidget field = new TextFieldWidget(this.textRenderer, x, y, FIELD_WIDTH, CONTROL_HEIGHT, label);
+	private int left() {
+		return this.width / 2 - PANEL_WIDTH / 2;
+	}
+
+	private TextFieldWidget addNumberField(int x, String initial, Text label, Consumer<String> onChange) {
+		TextFieldWidget field = new TextFieldWidget(this.textRenderer, x, FIELD_Y, FIELD_WIDTH, ROW_HEIGHT, label);
 		field.setMaxLength(20);
 		field.setTextPredicate(s -> NUMBER.matcher(s).matches());
 		field.setText(initial);
 		field.setChangedListener(onChange);
 		return this.addDrawableChild(field);
+	}
+
+	private void startListening(int slot) {
+		this.listening = slot;
+		this.refreshKeyButtons();
+	}
+
+	/** Escape clears a binding; anything else becomes the new key. */
+	@Override
+	public boolean keyPressed(KeyInput input) {
+		if (this.listening == LISTEN_NONE) {
+			return super.keyPressed(input);
+		}
+
+		int key = input.key() == GLFW.GLFW_KEY_ESCAPE ? Keybinds.UNBOUND : input.key();
+		if (this.listening == LISTEN_MOD) {
+			this.modKey = key;
+			if (key != Keybinds.UNBOUND && this.fakeKey == key) {
+				this.fakeKey = Keybinds.UNBOUND;
+			}
+		} else {
+			this.fakeKey = key;
+			if (key != Keybinds.UNBOUND && this.modKey == key) {
+				this.modKey = Keybinds.UNBOUND;
+			}
+		}
+
+		this.listening = LISTEN_NONE;
+		this.refreshKeyButtons();
+		return true;
+	}
+
+	private void refreshKeyButtons() {
+		this.modKeyButton.setMessage(keyButtonText("bettercoords.config.keys.mod", this.modKey, this.listening == LISTEN_MOD));
+		this.fakeKeyButton.setMessage(keyButtonText("bettercoords.config.keys.fake", this.fakeKey, this.listening == LISTEN_FAKE));
+	}
+
+	private static Text keyButtonText(String labelKey, int keyCode, boolean listening) {
+		Text value = listening
+				? Text.literal("> ? <").formatted(Formatting.YELLOW)
+				: Keybinds.displayName(keyCode);
+		return Text.translatable(labelKey, value);
 	}
 
 	private void updateFakeControls() {
@@ -158,20 +230,33 @@ public class BetterCoordsConfigScreen extends Screen {
 		super.render(context, mouseX, mouseY, delta);
 
 		int centerX = this.width / 2;
-		int left = centerX - CONTROL_WIDTH / 2;
+		int left = this.left();
 
 		context.drawCenteredTextWithShadow(this.textRenderer, this.title, centerX, TITLE_Y, WHITE);
 
-		context.drawCenteredTextWithShadow(this.textRenderer,
-				Text.translatable("bettercoords.config.fake.section"), centerX, SECTION_Y, SECTION);
+		this.drawSection(context, Text.translatable("bettercoords.config.keys.section"), KEYS_SECTION_Y);
+		this.drawSection(context, Text.translatable("bettercoords.config.fake.section"), FAKE_SECTION_Y);
 
 		// X / Y / Z labels above the fields
 		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.x"), left + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
-		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.y"), left + FIELD_WIDTH + FIELD_GAP + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
-		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.z"), left + 2 * (FIELD_WIDTH + FIELD_GAP) + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
+		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.y"), left + FIELD_WIDTH + COL_GAP + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
+		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.z"), left + 2 * (FIELD_WIDTH + COL_GAP) + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
 
 		context.drawWrappedTextWithShadow(this.textRenderer,
-				Text.translatable("bettercoords.config.fake.info"), centerX - INFO_WIDTH / 2, INFO_Y, INFO_WIDTH, GRAY);
+				Text.translatable("bettercoords.config.fake.info"), left, INFO_Y, PANEL_WIDTH, GRAY);
+	}
+
+	/** Section label with a rule running out to both edges of the panel. */
+	private void drawSection(DrawContext context, Text label, int y) {
+		int centerX = this.width / 2;
+		int left = this.left();
+		int halfLabel = this.textRenderer.getWidth(label) / 2;
+		int ruleY = y + 4;
+		int pad = 6;
+
+		context.drawCenteredTextWithShadow(this.textRenderer, label, centerX, y, SECTION);
+		context.fill(left, ruleY, centerX - halfLabel - pad, ruleY + 1, DIVIDER);
+		context.fill(centerX + halfLabel + pad, ruleY, left + PANEL_WIDTH, ruleY + 1, DIVIDER);
 	}
 
 	@Override
@@ -194,6 +279,8 @@ public class BetterCoordsConfigScreen extends Screen {
 		cfg.glitchEnabled = this.glitchEnabled;
 		cfg.showFacing = this.showFacing;
 		cfg.fakeCoordsEnabled = this.fakeEnabled;
+		cfg.toggleModKey = this.modKey;
+		cfg.toggleFakeCoordsKey = this.fakeKey;
 		cfg.fakeX = newX;
 		cfg.fakeY = newY;
 		cfg.fakeZ = newZ;

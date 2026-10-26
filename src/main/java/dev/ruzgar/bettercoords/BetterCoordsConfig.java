@@ -25,6 +25,10 @@ public class BetterCoordsConfig {
 	/** When on, a vanilla-style "Facing:" line is drawn under the coordinates. */
 	public boolean showFacing = false;
 
+	/** GLFW key codes for the in-game toggles; -1 means unbound. */
+	public int toggleModKey = -1;
+	public int toggleFakeCoordsKey = -1;
+
 	/** When on, the position you were at when it was enabled is displayed as {@code fakeX/Y/Z}. */
 	public boolean fakeCoordsEnabled = false;
 	public double fakeX = 0.0;
