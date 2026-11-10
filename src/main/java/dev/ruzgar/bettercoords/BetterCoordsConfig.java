@@ -25,7 +25,7 @@ public class BetterCoordsConfig {
 	/** When on, a vanilla-style "Facing:" line is drawn under the coordinates. */
 	public boolean showFacing = false;
 
-	/** GLFW key codes for the in-game toggles; -1 means unbound. */
+	/** InputConstants key codes for the in-game toggles; -1 means unbound. */
 	public int toggleModKey = -1;
 	public int toggleFakeCoordsKey = -1;
 
@@ -44,12 +44,21 @@ public class BetterCoordsConfig {
 	public double offsetZ = 0.0;
 	public boolean needsCalibration = true;
 
+	/** 0 (missing) = keys stored as GLFW codes by 1.x; 2 = InputConstants (SDL) codes. */
+	public int keyCodeVersion = 2;
+
 	public static BetterCoordsConfig load() {
 		if (Files.exists(FILE)) {
 			try {
 				String json = Files.readString(FILE, StandardCharsets.UTF_8);
 				BetterCoordsConfig loaded = GSON.fromJson(json, BetterCoordsConfig.class);
 				if (loaded != null) {
+					if (loaded.keyCodeVersion < 2) {
+						loaded.toggleModKey = Keybinds.fromGlfw(loaded.toggleModKey);
+						loaded.toggleFakeCoordsKey = Keybinds.fromGlfw(loaded.toggleFakeCoordsKey);
+						loaded.keyCodeVersion = 2;
+						loaded.save();
+					}
 					return loaded;
 				}
 			} catch (Exception e) {

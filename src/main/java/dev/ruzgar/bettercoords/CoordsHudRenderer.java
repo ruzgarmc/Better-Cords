@@ -1,11 +1,11 @@
 package dev.ruzgar.bettercoords;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Locale;
 
@@ -28,9 +28,9 @@ public final class CoordsHudRenderer {
 	private CoordsHudRenderer() {
 	}
 
-	public static void render(DrawContext context, TextRenderer textRenderer, Entity camera) {
+	public static void render(GuiGraphicsExtractor context, Font textRenderer, Entity camera) {
 		BetterCoordsConfig cfg = BetterCoords.config();
-		Vec3d pos = DisplayedCoords.of(camera);
+		Vec3 pos = DisplayedCoords.of(camera);
 
 		String coords = String.format(Locale.ROOT, "%.3f  %.5f  %.3f", pos.x, pos.y, pos.z);
 		COORDS.draw(context, textRenderer, "XYZ: ", coords, 0, cfg.glitchEnabled);
@@ -42,7 +42,7 @@ public final class CoordsHudRenderer {
 
 	/** Same wording and rounding as the vanilla facing line. */
 	private static String facingText(Entity camera) {
-		Direction direction = camera.getHorizontalFacing();
+		Direction direction = camera.getDirection();
 		String axis = switch (direction) {
 			case NORTH -> "Towards negative Z";
 			case SOUTH -> "Towards positive Z";
@@ -51,10 +51,10 @@ public final class CoordsHudRenderer {
 			default -> "Invalid";
 		};
 		return String.format(Locale.ROOT, "%s (%s) (%.1f / %.1f)",
-				direction.asString(),
+				direction.getSerializedName(),
 				axis,
-				MathHelper.wrapDegrees(camera.getYaw()),
-				MathHelper.wrapDegrees(camera.getPitch()));
+				Mth.wrapDegrees(camera.getYRot()),
+				Mth.wrapDegrees(camera.getXRot()));
 	}
 
 	/** One rendered line: its glitch state plus the width its background box is currently drawn at. */
@@ -67,9 +67,9 @@ public final class CoordsHudRenderer {
 		private int windowMax;
 		private long windowStartedAt;
 
-		void draw(DrawContext context, TextRenderer textRenderer, String prefix, String value, int index, boolean glitched) {
+		void draw(GuiGraphicsExtractor context, Font textRenderer, String prefix, String value, int index, boolean glitched) {
 			String line = prefix + (glitched ? this.glitch.scramble(value) : value);
-			int textWidth = textRenderer.getWidth(line);
+			int textWidth = textRenderer.width(line);
 
 			// Glitch glyphs are not all the same width, so the raw text width changes every time a
 			// character is re-rolled. Letting the box follow that makes its right edge flicker, so
@@ -78,7 +78,7 @@ public final class CoordsHudRenderer {
 
 			int y = Y + index * LINE_HEIGHT;
 			context.fill(X - 1, y - 1, X + width + 1, y + LINE_HEIGHT - 1, BACKGROUND);
-			context.drawText(textRenderer, line, X, y, TEXT_COLOR, false);
+			context.text(textRenderer, line, X, y, TEXT_COLOR, false);
 		}
 
 		private int widestRecently(int target) {

@@ -1,16 +1,16 @@
 package dev.ruzgar.bettercoords;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.CyclingButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.screen.ScreenTexts;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
 
 import java.util.Locale;
 import java.util.function.Consumer;
@@ -64,15 +64,15 @@ public class BetterCoordsConfigScreen extends Screen {
 	private boolean reanchorRequested;
 	private int listening = LISTEN_NONE;
 
-	private TextFieldWidget xField;
-	private TextFieldWidget yField;
-	private TextFieldWidget zField;
-	private ButtonWidget reanchorButton;
-	private ButtonWidget modKeyButton;
-	private ButtonWidget fakeKeyButton;
+	private EditBox xField;
+	private EditBox yField;
+	private EditBox zField;
+	private Button reanchorButton;
+	private Button modKeyButton;
+	private Button fakeKeyButton;
 
 	public BetterCoordsConfigScreen(Screen parent) {
-		super(Text.translatable("bettercoords.config.title"));
+		super(Component.translatable("bettercoords.config.title"));
 		this.parent = parent;
 
 		BetterCoordsConfig cfg = BetterCoords.config();
@@ -93,66 +93,66 @@ public class BetterCoordsConfigScreen extends Screen {
 		int rightCol = left + COL_WIDTH + COL_GAP;
 
 		// --- switches, two per row ---
-		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.modEnabled)
-				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.enabled.tooltip")))
-				.build(left, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
-						Text.translatable("bettercoords.config.enabled"),
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.modEnabled)
+				.withTooltip(value -> Tooltip.create(Component.translatable("bettercoords.config.enabled.tooltip")))
+				.create(left, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
+						Component.translatable("bettercoords.config.enabled"),
 						(button, value) -> this.modEnabled = value));
 
-		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.glitchEnabled)
-				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.glitch.tooltip")))
-				.build(rightCol, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
-						Text.translatable("bettercoords.config.glitch"),
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.glitchEnabled)
+				.withTooltip(value -> Tooltip.create(Component.translatable("bettercoords.config.glitch.tooltip")))
+				.create(rightCol, TOGGLE_ROW_1_Y, COL_WIDTH, ROW_HEIGHT,
+						Component.translatable("bettercoords.config.glitch"),
 						(button, value) -> this.glitchEnabled = value));
 
-		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.showFacing)
-				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.facing.tooltip")))
-				.build(left, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
-						Text.translatable("bettercoords.config.facing"),
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.showFacing)
+				.withTooltip(value -> Tooltip.create(Component.translatable("bettercoords.config.facing.tooltip")))
+				.create(left, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
+						Component.translatable("bettercoords.config.facing"),
 						(button, value) -> this.showFacing = value));
 
-		this.addDrawableChild(CyclingButtonWidget.onOffBuilder(this.fakeEnabled)
-				.tooltip(value -> Tooltip.of(Text.translatable("bettercoords.config.fake.enabled.tooltip")))
-				.build(rightCol, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
-						Text.translatable("bettercoords.config.fake.enabled"),
+		this.addRenderableWidget(CycleButton.onOffBuilder(this.fakeEnabled)
+				.withTooltip(value -> Tooltip.create(Component.translatable("bettercoords.config.fake.enabled.tooltip")))
+				.create(rightCol, TOGGLE_ROW_2_Y, COL_WIDTH, ROW_HEIGHT,
+						Component.translatable("bettercoords.config.fake.enabled"),
 						(button, value) -> {
 							this.fakeEnabled = value;
 							this.updateFakeControls();
 						}));
 
 		// --- toggle keys ---
-		this.modKeyButton = this.addDrawableChild(ButtonWidget.builder(
-						Text.empty(), button -> this.startListening(LISTEN_MOD))
-				.dimensions(left, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
-				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.keys.hint")))
+		this.modKeyButton = this.addRenderableWidget(Button.builder(
+						Component.empty(), button -> this.startListening(LISTEN_MOD))
+				.bounds(left, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
+				.tooltip(Tooltip.create(Component.translatable("bettercoords.config.keys.hint")))
 				.build());
 
-		this.fakeKeyButton = this.addDrawableChild(ButtonWidget.builder(
-						Text.empty(), button -> this.startListening(LISTEN_FAKE))
-				.dimensions(rightCol, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
-				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.keys.hint")))
+		this.fakeKeyButton = this.addRenderableWidget(Button.builder(
+						Component.empty(), button -> this.startListening(LISTEN_FAKE))
+				.bounds(rightCol, KEYS_ROW_Y, COL_WIDTH, ROW_HEIGHT)
+				.tooltip(Tooltip.create(Component.translatable("bettercoords.config.keys.hint")))
 				.build());
 
 		// --- fake coordinates ---
-		this.xField = this.addNumberField(left, this.xText, Text.translatable("bettercoords.config.fake.x"), s -> this.xText = s);
-		this.yField = this.addNumberField(left + FIELD_WIDTH + COL_GAP, this.yText, Text.translatable("bettercoords.config.fake.y"), s -> this.yText = s);
-		this.zField = this.addNumberField(left + 2 * (FIELD_WIDTH + COL_GAP), this.zText, Text.translatable("bettercoords.config.fake.z"), s -> this.zText = s);
+		this.xField = this.addNumberField(left, this.xText, Component.translatable("bettercoords.config.fake.x"), s -> this.xText = s);
+		this.yField = this.addNumberField(left + FIELD_WIDTH + COL_GAP, this.yText, Component.translatable("bettercoords.config.fake.y"), s -> this.yText = s);
+		this.zField = this.addNumberField(left + 2 * (FIELD_WIDTH + COL_GAP), this.zText, Component.translatable("bettercoords.config.fake.z"), s -> this.zText = s);
 
-		this.reanchorButton = this.addDrawableChild(ButtonWidget.builder(
-						Text.translatable("bettercoords.config.fake.reanchor"), button -> {
+		this.reanchorButton = this.addRenderableWidget(Button.builder(
+						Component.translatable("bettercoords.config.fake.reanchor"), button -> {
 							this.reanchorRequested = true;
-							button.setMessage(Text.translatable("bettercoords.config.fake.reanchor.done"));
+							button.setMessage(Component.translatable("bettercoords.config.fake.reanchor.done"));
 							button.active = false;
 						})
-				.dimensions(left, REANCHOR_Y, PANEL_WIDTH, ROW_HEIGHT)
-				.tooltip(Tooltip.of(Text.translatable("bettercoords.config.fake.reanchor.tooltip")))
+				.bounds(left, REANCHOR_Y, PANEL_WIDTH, ROW_HEIGHT)
+				.tooltip(Tooltip.create(Component.translatable("bettercoords.config.fake.reanchor.tooltip")))
 				.build());
 		if (this.reanchorRequested) {
-			this.reanchorButton.setMessage(Text.translatable("bettercoords.config.fake.reanchor.done"));
+			this.reanchorButton.setMessage(Component.translatable("bettercoords.config.fake.reanchor.done"));
 		}
 
-		this.addDrawableChild(ButtonWidget.builder(ScreenTexts.DONE, button -> this.close())
-				.dimensions(left + PANEL_WIDTH / 4, this.height - 26, PANEL_WIDTH / 2, ROW_HEIGHT)
+		this.addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> this.onClose())
+				.bounds(left + PANEL_WIDTH / 4, this.height - 26, PANEL_WIDTH / 2, ROW_HEIGHT)
 				.build());
 
 		this.refreshKeyButtons();
@@ -163,13 +163,21 @@ public class BetterCoordsConfigScreen extends Screen {
 		return this.width / 2 - PANEL_WIDTH / 2;
 	}
 
-	private TextFieldWidget addNumberField(int x, String initial, Text label, Consumer<String> onChange) {
-		TextFieldWidget field = new TextFieldWidget(this.textRenderer, x, FIELD_Y, FIELD_WIDTH, ROW_HEIGHT, label);
+	private EditBox addNumberField(int x, String initial, Component label, Consumer<String> onChange) {
+		EditBox field = new EditBox(this.font, x, FIELD_Y, FIELD_WIDTH, ROW_HEIGHT, label);
 		field.setMaxLength(20);
-		field.setTextPredicate(s -> NUMBER.matcher(s).matches());
-		field.setText(initial);
-		field.setChangedListener(onChange);
-		return this.addDrawableChild(field);
+		field.setValue(initial);
+		// EditBox has no input filter any more, so an invalid edit is undone by restoring the last good text.
+		String[] lastValid = {initial};
+		field.setResponder(s -> {
+			if (NUMBER.matcher(s).matches()) {
+				lastValid[0] = s;
+				onChange.accept(s);
+			} else {
+				field.setValue(lastValid[0]);
+			}
+		});
+		return this.addRenderableWidget(field);
 	}
 
 	private void startListening(int slot) {
@@ -179,12 +187,12 @@ public class BetterCoordsConfigScreen extends Screen {
 
 	/** Escape clears a binding; anything else becomes the new key. */
 	@Override
-	public boolean keyPressed(KeyInput input) {
+	public boolean keyPressed(KeyEvent input) {
 		if (this.listening == LISTEN_NONE) {
 			return super.keyPressed(input);
 		}
 
-		int key = input.key() == GLFW.GLFW_KEY_ESCAPE ? Keybinds.UNBOUND : input.key();
+		int key = input.key() == InputConstants.KEY_ESCAPE ? Keybinds.UNBOUND : input.key();
 		if (this.listening == LISTEN_MOD) {
 			this.modKey = key;
 			if (key != Keybinds.UNBOUND && this.fakeKey == key) {
@@ -207,11 +215,11 @@ public class BetterCoordsConfigScreen extends Screen {
 		this.fakeKeyButton.setMessage(keyButtonText("bettercoords.config.keys.fake", this.fakeKey, this.listening == LISTEN_FAKE));
 	}
 
-	private static Text keyButtonText(String labelKey, int keyCode, boolean listening) {
-		Text value = listening
-				? Text.literal("> ? <").formatted(Formatting.YELLOW)
+	private static Component keyButtonText(String labelKey, int keyCode, boolean listening) {
+		Component value = listening
+				? Component.literal("> ? <").withStyle(ChatFormatting.YELLOW)
 				: Keybinds.displayName(keyCode);
-		return Text.translatable(labelKey, value);
+		return Component.translatable(labelKey, value);
 	}
 
 	private void updateFakeControls() {
@@ -226,43 +234,43 @@ public class BetterCoordsConfigScreen extends Screen {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(context, mouseX, mouseY, delta);
 
 		int centerX = this.width / 2;
 		int left = this.left();
 
-		context.drawCenteredTextWithShadow(this.textRenderer, this.title, centerX, TITLE_Y, WHITE);
+		context.centeredText(this.font, this.title, centerX, TITLE_Y, WHITE);
 
-		this.drawSection(context, Text.translatable("bettercoords.config.keys.section"), KEYS_SECTION_Y);
-		this.drawSection(context, Text.translatable("bettercoords.config.fake.section"), FAKE_SECTION_Y);
+		this.drawSection(context, Component.translatable("bettercoords.config.keys.section"), KEYS_SECTION_Y);
+		this.drawSection(context, Component.translatable("bettercoords.config.fake.section"), FAKE_SECTION_Y);
 
 		// X / Y / Z labels above the fields
-		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.x"), left + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
-		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.y"), left + FIELD_WIDTH + COL_GAP + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
-		context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("bettercoords.config.fake.z"), left + 2 * (FIELD_WIDTH + COL_GAP) + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
+		context.centeredText(this.font, Component.translatable("bettercoords.config.fake.x"), left + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
+		context.centeredText(this.font, Component.translatable("bettercoords.config.fake.y"), left + FIELD_WIDTH + COL_GAP + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
+		context.centeredText(this.font, Component.translatable("bettercoords.config.fake.z"), left + 2 * (FIELD_WIDTH + COL_GAP) + FIELD_WIDTH / 2, FIELD_LABEL_Y, WHITE);
 
-		context.drawWrappedTextWithShadow(this.textRenderer,
-				Text.translatable("bettercoords.config.fake.info"), left, INFO_Y, PANEL_WIDTH, GRAY);
+		context.textWithWordWrap(this.font,
+				Component.translatable("bettercoords.config.fake.info"), left, INFO_Y, PANEL_WIDTH, GRAY);
 	}
 
 	/** Section label with a rule running out to both edges of the panel. */
-	private void drawSection(DrawContext context, Text label, int y) {
+	private void drawSection(GuiGraphicsExtractor context, Component label, int y) {
 		int centerX = this.width / 2;
 		int left = this.left();
-		int halfLabel = this.textRenderer.getWidth(label) / 2;
+		int halfLabel = this.font.width(label) / 2;
 		int ruleY = y + 4;
 		int pad = 6;
 
-		context.drawCenteredTextWithShadow(this.textRenderer, label, centerX, y, SECTION);
+		context.centeredText(this.font, label, centerX, y, SECTION);
 		context.fill(left, ruleY, centerX - halfLabel - pad, ruleY + 1, DIVIDER);
 		context.fill(centerX + halfLabel + pad, ruleY, left + PANEL_WIDTH, ruleY + 1, DIVIDER);
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		this.applyAndSave();
-		this.client.setScreen(this.parent);
+		this.minecraft.gui.setScreen(this.parent);
 	}
 
 	private void applyAndSave() {

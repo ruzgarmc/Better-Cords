@@ -1,14 +1,13 @@
 package dev.ruzgar.bettercoords;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 /**
- * The two in-game toggles. Keys are stored as GLFW codes in the config and bound from the mod's own
- * settings screen, so the mod stays independent of Fabric API.
+ * The two in-game toggles. Keys are stored as {@link InputConstants} key codes in the config and bound
+ * from the mod's own settings screen, so the mod stays independent of Fabric API.
  */
 public final class Keybinds {
 	public static final int UNBOUND = -1;
@@ -17,7 +16,7 @@ public final class Keybinds {
 	}
 
 	/** Called for every key press that reaches the game with no screen open. */
-	public static void onKeyPressed(MinecraftClient client, int keyCode) {
+	public static void onKeyPressed(Minecraft client, int keyCode) {
 		if (keyCode == UNBOUND) {
 			return;
 		}
@@ -40,17 +39,40 @@ public final class Keybinds {
 		}
 	}
 
-	private static void announce(MinecraftClient client, String translationKey, boolean on) {
-		Text state = Text.translatable(on ? "bettercoords.message.on" : "bettercoords.message.off")
-				.formatted(on ? Formatting.GREEN : Formatting.RED);
-		client.inGameHud.setOverlayMessage(Text.translatable(translationKey, state), false);
+	private static void announce(Minecraft client, String translationKey, boolean on) {
+		Component state = Component.translatable(on ? "bettercoords.message.on" : "bettercoords.message.off")
+				.withStyle(on ? ChatFormatting.GREEN : ChatFormatting.RED);
+		client.gui.hud.setOverlayMessage(Component.translatable(translationKey, state), false);
 	}
 
 	/** The key's name as the game writes it, or "None" when nothing is bound. */
-	public static Text displayName(int keyCode) {
+	public static Component displayName(int keyCode) {
 		if (keyCode == UNBOUND) {
-			return Text.translatable("bettercoords.config.keys.unbound");
+			return Component.translatable("bettercoords.config.keys.unbound");
 		}
-		return InputUtil.fromKeyCode(new KeyInput(keyCode, 0, 0)).getLocalizedText();
+		return InputConstants.Type.KEYBOARD.getOrCreate(keyCode).getDisplayName();
+	}
+
+	/**
+	 * Configs written by 1.x hold GLFW key codes; 26.3 uses SDL scancodes. Letters, digits and F1-F12
+	 * are translated, anything else is unbound so it can be set again from the settings screen.
+	 */
+	static int fromGlfw(int glfw) {
+		if (glfw == UNBOUND) {
+			return UNBOUND;
+		}
+		if (glfw >= 65 && glfw <= 90) {
+			return InputConstants.KEY_A + (glfw - 65);
+		}
+		if (glfw >= 49 && glfw <= 57) {
+			return InputConstants.KEY_1 + (glfw - 49);
+		}
+		if (glfw == 48) {
+			return InputConstants.KEY_0;
+		}
+		if (glfw >= 290 && glfw <= 301) {
+			return InputConstants.KEY_F1 + (glfw - 290);
+		}
+		return UNBOUND;
 	}
 }

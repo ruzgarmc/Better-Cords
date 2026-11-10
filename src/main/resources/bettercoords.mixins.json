@@ -2,11 +2,11 @@
 	"required": true,
 	"minVersion": "0.8",
 	"package": "dev.ruzgar.bettercoords.mixin",
-	"compatibilityLevel": "JAVA_21",
+	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"DebugHudMixin",
-		"DebugHudProfileMixin",
-		"KeyboardMixin"
+		"DebugScreenOverlayMixin",
+		"DebugScreenEntryListMixin",
+		"KeyboardHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

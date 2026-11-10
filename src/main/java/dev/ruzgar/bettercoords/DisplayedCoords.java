@@ -1,7 +1,7 @@
 package dev.ruzgar.bettercoords;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Turns the real camera position into the position that should be shown on screen,
@@ -11,14 +11,14 @@ public final class DisplayedCoords {
 	private DisplayedCoords() {
 	}
 
-	public static Vec3d of(Entity camera) {
+	public static Vec3 of(Entity camera) {
 		BetterCoordsConfig cfg = BetterCoords.config();
 		double x = camera.getX();
 		double y = camera.getY();
 		double z = camera.getZ();
 
 		if (!cfg.fakeCoordsEnabled) {
-			return new Vec3d(x, y, z);
+			return new Vec3(x, y, z);
 		}
 
 		// First position we see after fake coords were enabled / edited becomes the fake point.
@@ -30,6 +30,6 @@ public final class DisplayedCoords {
 			cfg.save();
 		}
 
-		return new Vec3d(x + cfg.offsetX, y + cfg.offsetY, z + cfg.offsetZ);
+		return new Vec3(x + cfg.offsetX, y + cfg.offsetY, z + cfg.offsetZ);
 	}
 }
